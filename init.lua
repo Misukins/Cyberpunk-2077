@@ -42,8 +42,8 @@ local ripperDocsSpawnTable = { -- RipperDocs
 	[17] = { -1072.172729, -1274.062866,  11.456871 },
 }
 
-local CPS = require("CPStyling")
-local Utils = require("utilities")
+local CPS = require("config/CPStyling")
+local Utils = require("config/utilities")
 local heme = CPS.theme
 local color = CPS.color
 
@@ -55,8 +55,10 @@ local Config = {
 	}
 }
 
+DeathAlternative = { description = "Death Alternative" }
+
 function hasGodMode(player)
-	
+
 	return Game.GetGodModeSystem():HasGodMode(player:GetEntityID(), "Immortal")
 
 end
@@ -237,7 +239,7 @@ function drawDeathScreen()
 		end
 
 		ImGui.End()
-
+		
 		CPS.colorEnd(1)
 		CPS.setThemeEnd()
 	end
@@ -330,8 +332,8 @@ end
 registerForEvent("onInit", function()
 
 	ts = Game.GetTransactionSystem()
-	as = Game.GetActivityLogSystem()
-	tp = Game.GetTeleportationFacility()
+	--as = Game.GetActivityLogSystem()
+	--tp = Game.GetTeleportationFacility()
 	qs = Game.GetQuestsSystem()
 	gms = Game.GetGodModeSystem()
 	wWidth, wHeight = GetDisplayResolution()
