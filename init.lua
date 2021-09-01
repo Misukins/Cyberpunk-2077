@@ -332,8 +332,6 @@ end
 registerForEvent("onInit", function()
 
 	ts = Game.GetTransactionSystem()
-	--as = Game.GetActivityLogSystem()
-	--tp = Game.GetTeleportationFacility()
 	qs = Game.GetQuestsSystem()
 	gms = Game.GetGodModeSystem()
 	wWidth, wHeight = GetDisplayResolution()
