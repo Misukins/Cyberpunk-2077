@@ -155,8 +155,6 @@ end
 function runUpdates(player)
 
 	local player = Game.GetPlayer()
-	local currentHealthPercentage = player.healthStatListener.healthEvent.value
-
 	if not player then
 		return
 	end
@@ -166,8 +164,9 @@ function runUpdates(player)
 		enableGodMod(player)
 	end
 
-	if currentHealthPercentage == 1 then
-		lowHealthThresholdReached(player, IProps.activePackage)
+	playerHealth = ss:GetStatPoolValue(playerID, 'Health', true)
+	if playerHealth == 1 then 
+		lowHealthThresholdReached(player, IProps.activePackage) 
 	end
 
 	if playerIsInDistance(IProps.hospitalCoords, 3) then
@@ -331,9 +330,12 @@ end
 
 registerForEvent("onInit", function()
 
+	player = Game.GetPlayerSystem():GetLocalPlayerMainGameObject()
 	ts = Game.GetTransactionSystem()
 	qs = Game.GetQuestsSystem()
 	gms = Game.GetGodModeSystem()
+	playerID = player:GetEntityID()
+	ss = Game.GetStatPoolsSystem()
 	wWidth, wHeight = GetDisplayResolution()
 	myMoney = GetSingleton("gameItemID"):FromTDBID(TweakDBID.new("Items.money"))
 	print("[Death Alternative] Initialized | Version: 1.0.0 - Orig Creator: 3nvy | Edit by Amy")
