@@ -1,6 +1,6 @@
 --[[ 
 	[Death Alternative]
-	Version: 1.0.0
+	Version: 2.2.0
 	Orig Creator: 3nvy
 	Edit: Amy (Misukins) 
 	Date: August+++
@@ -9,15 +9,19 @@
 local DeathAlternative = {
 	title = "Death Alternative",
 	description = "Death Alternative",
-	version = "2.1",
+	version = "2.2",
 	creator = "3nvy",
 	editby = "Misukins"
 }
-
 local showSettings = false
 local useOldFeatures = false
-local userSettingsFile = "config/settings.AltD.json"
+local TPtoVApartment = false
 
+-- !TODO
+-- tp medical center near you-- just like in gta5 :P
+-- when ever i find every hospital in game
+
+local userSettingsFile = "config/settings.AltD.json"
 local IProps = {
 	deltaTime = 0,
 	timeLoaded = 0,
@@ -58,7 +62,6 @@ local CPS = require("config/CPStyling")
 local Utils = require("config/utilities")
 local heme = CPS.theme
 local color = CPS.color
-
 local Config = {
 	lifePackages = {
 		{ name = "Platinum", time = 1, healthRegen = 100, price = 50000 },
@@ -68,33 +71,28 @@ local Config = {
 }
 
 function hasGodMode(player)
-
 	return Game.GetGodModeSystem():HasGodMode(player:GetEntityID(), "Immortal")
-
 end
 
 function enableGodMod(player)
-
 	gms:EnableOverride(player:GetEntityID(), "Immortal", CName.new("SecondHeart"))
-
 end
 
 function disableGodMod(player)
-
 	gms:DisableOverride(player:GetEntityID(), CName.new("SecondHeart"))
-
 end
 
 function revivePlayer(player)
-
 	local player = Game.GetPlayer()
 	if player and IProps.canDrawDeathScreen then
 		local lpDetails = Config.lifePackages[IProps.activePackage]
 		local x,y,z = unpack(ripperDocsSpawnTable[math.random(1,#ripperDocsSpawnTable)])
 		Game.Heal(lpDetails.healthRegen)
 		ts:RemoveItem(player, myMoney, lpDetails.price)
-		if (useOldFeatures == false) then
+		if (useOldFeatures == false) and (TPtoVApartment == false) then
 			Game.TeleportPlayerToPosition(x, y, z) --ripperdocs random
+		elseif (useOldFeatures == false) and (TPtoVApartment == true) then
+			Game.TeleportPlayerToPosition(-1380.580566, 1271.436035, 123.064896) --V's Apartment
 		else
 			Game.TeleportPlayerToPosition(-372.268982, 271.240143, 215.515579) --(old location / room ((you need to add shortcut to exit!)))
 		end
@@ -102,11 +100,9 @@ function revivePlayer(player)
 		Game.SetTimeDilation(0)
 		IProps.canDrawDeathScreen = false
 	end
-
 end
 
 function cancelRevive(player)
-
 	local player = Game.GetPlayer()
 	if player and IProps.canDrawDeathScreen then
 		qs:SetFactStr("activeHealthPack", 0)
@@ -116,40 +112,32 @@ function cancelRevive(player)
 		Game.SetTimeDilation(0)
 		IProps.canDrawDeathScreen = false
 	end
-
 end
 
 function lowHealthThresholdReached(player)
-
 	local player = Game.GetPlayer()
 	local isInVehicle = Game['GetMountedVehicle;GameObject'](Game.GetPlayer())
 	if not isInVehicle and IProps.activePackage > 0 then
 		local playerMoney = ts:GetItemQuantity(player, myMoney)
 		local packageValue = Config.lifePackages[IProps.activePackage].price
-
 		if playerMoney < packageValue then
 			IProps.canPayRevive = false
 		else
 			IProps.canPayRevive = true
 		end
-
 		IProps.canDrawDeathScreen = true
 		Game.SetTimeDilation(0.00001)
 	else
 		IProps.canDrawDeathScreen = true
 		cancelRevive(player)
 	end
-
 end
 
 function checkActiveLifePack()
-
 	IProps.activePackage = qs:GetFactStr("activeHealthPack")
-
 end
 
 function playerIsInDistance(coordsList, maxDistance)
-
 	local player = Game.GetPlayer()
 	if player then
 		local pLoc = player:GetWorldPosition()
@@ -163,26 +151,21 @@ function playerIsInDistance(coordsList, maxDistance)
 		end
 	end
 	return false
-
 end
 
 function runUpdates(player)
-
 	local player = Game.GetPlayer()
 	if not player then
 		return
 	end
-
 	checkActiveLifePack()
 	if not hasGodMode(player) then
 		enableGodMod(player)
 	end
-
 	playerHealth = ss:GetStatPoolValue(playerID, 'Health', true)
 	if playerHealth == 1 then 
 		lowHealthThresholdReached(player, IProps.activePackage) 
 	end
-
 	if (useOldFeatures == true) then
 		if playerIsInDistance(IProps.hospitalCoords, 3) then
 			IProps.canDrawBuyLifePackScreen = true
@@ -190,11 +173,9 @@ function runUpdates(player)
 			IProps.canDrawBuyLifePackScreen = false
 		end
 	end
-
 end
 
 function drawDeathScreen()
-
 	if IProps.canDrawDeathScreen then 
 		local lp = Config.lifePackages[IProps.activePackage]
 		CPS.setThemeBegin()
@@ -252,17 +233,13 @@ function drawDeathScreen()
 		if dieAndReload then
 			cancelRevive()
 		end
-
 		ImGui.End()
-		
 		CPS.colorEnd(1)
 		CPS.setThemeEnd()
 	end
-
 end
 
 function drawActiveLifePackage()
-
 	CPS.setThemeBegin()
 	CPS.colorBegin("WindowBg", {0,0,0,0.5})
 	ImGui.SetNextWindowSize(190, 10)
@@ -277,20 +254,16 @@ function drawActiveLifePackage()
 	ImGui.End()
 	CPS.colorEnd(1)
 	CPS.setThemeEnd()
-
 end
 
 function buyPackage(packageID, packageName)
-
 	local qs = Game.GetQuestsSystem()
 	IProps.activePackage = packageID
 	qs:SetFactStr("activeHealthPack", packageID)
 	Game.GetPlayer():SetWarningMessage(packageName.." Insurance Package Activated")
-
 end
 
 function drawBuyLifePack()
-
 	if IProps.canDrawBuyLifePackScreen then
 		CPS.setThemeBegin()
 		CPS.colorBegin("WindowBg", {0,0,0,1})
@@ -341,19 +314,9 @@ function drawBuyLifePack()
 		CPS.colorEnd(1)
 		CPS.setThemeEnd()
 	end
-
-end
-
-function saveFeatureStates()
-	if useOldFeatures then
-		useOldFeatures = true
-	else
-		useOldFeatures = false
-	end
 end
 
 registerForEvent("onInit", function()
-
 	player = Game.GetPlayerSystem():GetLocalPlayerMainGameObject()
 	ts = Game.GetTransactionSystem()
 	qs = Game.GetQuestsSystem()
@@ -362,8 +325,8 @@ registerForEvent("onInit", function()
 	ss = Game.GetStatPoolsSystem()
 	wWidth, wHeight = GetDisplayResolution()
 	myMoney = GetSingleton("gameItemID"):FromTDBID(TweakDBID.new("Items.money"))
+	load_settings(userSettingsFile)
 	print("[Death Alternative] Initialized | Version: 1.0.0 - Orig Creator: 3nvy | Edit by Amy")
-
 end)
 
 registerForEvent("onOverlayOpen", function()
@@ -379,49 +342,50 @@ registerForEvent("onOverlayClose", function()
 end)
 
 registerForEvent("onUpdate", function(deltaTime)
-
 	IProps.deltaTime = IProps.deltaTime + deltaTime
 	if IProps.deltaTime > 1 then
 		runUpdates()
         IProps.deltaTime = IProps.deltaTime - 1
     end
-
 end)
 
 registerHotkey("exit_hotel", "Exit Hotel", function()
-
 	local coords = {{x = -364.96457, y = 267.6644}}
 	local canTeleport = playerIsInDistance(coords, 3)
 	if canTeleport then
 		Game.TeleportPlayerToPosition(-346.79602, 221.25322, 27.59404)
 	end
-	
 end)
 
 registerForEvent("onDraw", function()
-
 	if (showSettings) then
-		ImGui.Begin(DeathAlternative.title)
-		
-		ImGui.Text("Version: " .. tostring(DeathAlternative.version) .. ".")
-		ImGui.Text("Orig Creator: " .. tostring(DeathAlternative.creator) .. ".")
+		ImGui.Begin(DeathAlternative.title .. " Version " .. tostring(DeathAlternative.version) .. ".")
+		ImGui.Text("Original Creator: " .. tostring(DeathAlternative.creator) .. ".")
 		ImGui.Text("Continued by: " .. tostring(DeathAlternative.editby) .. ".")
-
 		ImGui.Separator()
-
 		ImGui.Text("Use old features:")
 		ImGui.Text("This will use original locations for everything,")
 		ImGui.Text("not modded by me just 1.3fix.")
 		ImGui.Text("!! Remember set hotkey to exit hotel room! !!")
+		ImGui.Text(" ")
+
 		state, pressed = ImGui.Checkbox("Use old features", useOldFeatures)
 		if pressed then 
 			useOldFeatures = state
-			saveFeatureStates()
 		end
 
 		ImGui.Separator()
 
-		ImGui.Text("Life Packs: ((just for backup))")
+		state, pressed = ImGui.Checkbox("Teleport to V's Apartment", TPtoVApartment)
+		if pressed then 
+			TPtoVApartment = state
+		end
+
+		ImGui.Separator()
+
+		ImGui.Text("Life Packs:")
+		ImGui.Text("this is just for me.. im just lazy tp go there... everytime")
+		ImGui.Text("Will be removed")
 		if ImGui.Button("Teleport to Drama Team HQ") then
 			Game.TeleportPlayerToPosition(-1361.7752685547, 1741.9836425781, 18.190002441406)
 		end
@@ -431,25 +395,24 @@ registerForEvent("onDraw", function()
 		if ImGui.Button("Save settings") then
 			save_settings(userSettingsFile)
 		end
-		
+
 		ImGui.SameLine()
+
 		if ImGui.Button("Load settings") then
 			load_settings(userSettingsFile)
 		end
 
 		ImGui.End()
-
 	end
 
 	drawDeathScreen()
 	drawBuyLifePack()
-
 end)
 
 function save_settings(filename)
-
 	data = {
-		useOldFeatures = useOldFeatures
+		useOldFeatures = useOldFeatures,
+		TPtoVApartment = TPtoVApartment,
 	}
 	local file = io.open(filename, "w")
 	local j = json.encode(data)
@@ -457,13 +420,12 @@ function save_settings(filename)
 	file:close()
 	print("Death Alternative: settings saved to " .. filename)
 	return true
-
 end
 
 function load_settings(filename)
 
 	if not file_exists(filename) then
-		print("Death Alternative: loading settings from " .. filename .. " failed, file didnt exist?")
+		print("Vs Pro Cyberpsycho: loading settings from " .. filename .. " failed, file didnt exist?")
 		return false
 	end
 
@@ -472,7 +434,14 @@ function load_settings(filename)
 	file:close()
 
 	useOldFeatures = j["useOldFeatures"]
+	TPtoVApartment = j["TPtoVApartment"]
 
 	print("Death Alternative: loaded settings from " .. filename)
 	return true
+
+end
+
+function file_exists(filename) -- https://stackoverflow.com/a/4991602
+    local f=io.open(filename,"r")
+    if f~=nil then io.close(f) return true else return false end
 end
