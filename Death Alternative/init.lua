@@ -6,29 +6,27 @@
 	Date: August+++
 --]]
 
-local DeathAlternative = {
-	title = "Death Alternative",
-	description = "Death Alternative",
-	version = "2.2",
-	creator = "3nvy",
-	editby = "Misukins"
+local DeathAlternative 	= {
+	title 				= "Death Alternative",
+	description 		= "This mod is remake from (3nvy's) original Death Alternative Mod.",
+	version 			= "2.3",
+	creator 			= "3nvy",
+	editby 				= "Misukins"
 }
-local showSettings = false
-local useOldFeatures = false
-local TPtoVApartment = false
+local showSettings 		= false
+local useOldFeatures 	= true
+local TPtoVApartment 	= false
+local useRipperDocs 	= false
+local DEBUG 			= true
 
--- !TODO
--- tp medical center near you-- just like in gta5 :P
--- when ever i find every hospital in game
-
-local userSettingsFile = "config/settings.AltD.json"
-local IProps = {
-	deltaTime = 0,
-	timeLoaded = 0,
-	activePackage = nil,
-	drawSetupMenu = false,
-	canPayRevive = false,
-	canDrawDeathScreen = false,
+local userSettingsFile 	= "config/settings.AltD.json"
+local IProps 			= {
+	deltaTime 			= 0,
+	timeLoaded 			= 0,
+	activePackage 		= nil,
+	drawSetupMenu 		= false,
+	canPayRevive 		= false,
+	canDrawDeathScreen 	= false,
 	canDrawBuyLifePackScreen = false,
 	hospitalCoords = {
 		{ x = -1337.394,  y = 1745.6206 },
@@ -67,6 +65,8 @@ local Config = {
 		{ name = "Platinum", time = 1, healthRegen = 100, price = 50000 },
 		{ name = "Gold", time = 3, healthRegen = 50, price = 25000 },
 		{ name = "Silver", time = 5, healthRegen = 25, price = 10000 },
+		{ name = "Bronze", time = 7, healthRegen = 15, price = 5000 },
+		{ name = "Rock", time = 10, healthRegen = 5, price = 500 },
 	}
 }
 
@@ -89,9 +89,9 @@ function revivePlayer(player)
 		local x,y,z = unpack(ripperDocsSpawnTable[math.random(1,#ripperDocsSpawnTable)])
 		Game.Heal(lpDetails.healthRegen)
 		ts:RemoveItem(player, myMoney, lpDetails.price)
-		if (useOldFeatures == false) and (TPtoVApartment == false) then
+		if (useRipperDocs == true) then
 			Game.TeleportPlayerToPosition(x, y, z) --ripperdocs random
-		elseif (useOldFeatures == false) and (TPtoVApartment == true) then
+		elseif (TPtoVApartment == true) then
 			Game.TeleportPlayerToPosition(-1380.580566, 1271.436035, 123.064896) --V's Apartment
 		else
 			Game.TeleportPlayerToPosition(-372.268982, 271.240143, 215.515579) --(old location / room ((you need to add shortcut to exit!)))
@@ -284,6 +284,10 @@ function drawBuyLifePack()
 					CPS.colorBegin("Text", color.silver)
 				elseif packDetails.name == "Platinum" then
 					CPS.colorBegin("Text", color.cyan)
+				elseif packDetails.name == "Bronze" then
+					CPS.colorBegin("Text", color.orange)
+				elseif packDetails.name == "Rock" then
+					CPS.colorBegin("Text", color.grey)
 				else
 					CPS.colorBegin("Text", color.red)
 				end
@@ -371,7 +375,18 @@ registerForEvent("onDraw", function()
 
 		state, pressed = ImGui.Checkbox("Use old features", useOldFeatures)
 		if pressed then 
-			useOldFeatures = state
+			useOldFeatures 	= state
+			useRipperDocs 	= false
+			TPtoVApartment 	= false
+		end
+
+		ImGui.Separator()
+
+		state, pressed = ImGui.Checkbox("Use nearest RipperDoc", useRipperDocs)
+		if pressed then 
+			useRipperDocs = state
+			useOldFeatures 	= false
+			TPtoVApartment 	= false
 		end
 
 		ImGui.Separator()
@@ -379,18 +394,20 @@ registerForEvent("onDraw", function()
 		state, pressed = ImGui.Checkbox("Teleport to V's Apartment", TPtoVApartment)
 		if pressed then 
 			TPtoVApartment = state
+			useOldFeatures 	= false
+			useRipperDocs 	= false
 		end
 
 		ImGui.Separator()
-
-		ImGui.Text("Life Packs:")
-		ImGui.Text("this is just for me.. im just lazy tp go there... everytime")
-		ImGui.Text("Will be removed")
-		if ImGui.Button("Teleport to Drama Team HQ") then
-			Game.TeleportPlayerToPosition(-1361.7752685547, 1741.9836425781, 18.190002441406)
+		if DEBUG then
+			ImGui.Text("Life Packs:")
+			ImGui.Text("this is just for me.. im just lazy tp go there... everytime")
+			ImGui.Text("Will be removed")
+			if ImGui.Button("Teleport to Drama Team HQ") then
+				Game.TeleportPlayerToPosition(-1361.7752685547, 1741.9836425781, 18.190002441406)
+			end
+			ImGui.Separator()
 		end
-
-		ImGui.Separator()
 
 		if ImGui.Button("Save settings") then
 			save_settings(userSettingsFile)
@@ -411,8 +428,9 @@ end)
 
 function save_settings(filename)
 	data = {
-		useOldFeatures = useOldFeatures,
-		TPtoVApartment = TPtoVApartment,
+		useRipperDocs 	= useRipperDocs,
+		useOldFeatures 	= useOldFeatures,
+		TPtoVApartment 	= TPtoVApartment,
 	}
 	local file = io.open(filename, "w")
 	local j = json.encode(data)
@@ -433,8 +451,9 @@ function load_settings(filename)
 	local j = json.decode(file:read("*a"))
 	file:close()
 
-	useOldFeatures = j["useOldFeatures"]
-	TPtoVApartment = j["TPtoVApartment"]
+	useRipperDocs 	= j["useRipperDocs"]
+	useOldFeatures 	= j["useOldFeatures"]
+	TPtoVApartment 	= j["TPtoVApartment"]
 
 	print("Death Alternative: loaded settings from " .. filename)
 	return true
@@ -442,6 +461,11 @@ function load_settings(filename)
 end
 
 function file_exists(filename) -- https://stackoverflow.com/a/4991602
-    local f=io.open(filename,"r")
-    if f~=nil then io.close(f) return true else return false end
+    local f = io.open(filename,"r")
+    if f ~= nil then 
+		io.close(f) 
+		return true
+	else 
+		return false 
+	end
 end
